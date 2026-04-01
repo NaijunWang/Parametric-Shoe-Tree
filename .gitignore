@@ -71,6 +71,7 @@ pyrightconfig.json
 *.3dm
 *.step
 *.stp
+*.blend*
 
 # Data and output folders
 /data/
