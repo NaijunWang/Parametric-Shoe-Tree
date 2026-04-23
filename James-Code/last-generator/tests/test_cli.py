@@ -1,0 +1,125 @@
+from __future__ import annotations
+
+import subprocess
+import sys
+from pathlib import Path
+
+
+def test_help_lists_phase_commands() -> None:
+    project_root = Path(__file__).resolve().parents[1]
+    result = subprocess.run(
+        [sys.executable, "-m", "last_generator.cli", "--help"],
+        cwd=project_root,
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    assert result.returncode == 0
+    assert "measure" in result.stdout
+    assert "template" in result.stdout
+    assert "warp" in result.stdout
+    assert "refine" in result.stdout
+    assert "finalize" in result.stdout
+    assert "pipeline" in result.stdout
+
+
+def test_measure_command_writes_phase1_artifacts(tmp_path: Path) -> None:
+    project_root = Path(__file__).resolve().parents[1]
+    sample_scan = project_root.parent / "Sample Foot Scans" / "0014-B.obj"
+    output_dir = tmp_path / "phase1" / "0014-B"
+    result = subprocess.run(
+        [
+            sys.executable,
+            "-m",
+            "last_generator.cli",
+            "measure",
+            str(sample_scan),
+            "-o",
+            str(output_dir),
+        ],
+        cwd=project_root,
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    assert result.returncode == 0, result.stderr
+    assert (output_dir / "mesh_aligned.obj").exists()
+    assert (output_dir / "annotated.obj").exists()
+    assert (output_dir / "annotated.png").exists()
+    assert (output_dir / "measurements.json").exists()
+    assert (output_dir / "audit.json").exists()
+
+
+def test_template_command_writes_phase2_artifacts(tmp_path: Path) -> None:
+    project_root = Path(__file__).resolve().parents[1]
+    output_dir = tmp_path / "phase2"
+    result = subprocess.run(
+        [
+            sys.executable,
+            "-m",
+            "last_generator.cli",
+            "template",
+            "-o",
+            str(output_dir),
+        ],
+        cwd=project_root,
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    assert result.returncode == 0, result.stderr
+    assert (output_dir / "base_last_decimated.obj").exists()
+    assert (output_dir / "base_last_measurements.json").exists()
+    assert (output_dir / "template_landmarks.json").exists()
+    assert (output_dir / "template_landmarks.png").exists()
+
+
+def test_warp_command_writes_phase3_artifacts(tmp_path: Path) -> None:
+    project_root = Path(__file__).resolve().parents[1]
+    sample_scan = project_root.parent / "Sample Foot Scans" / "0014-B.obj"
+    output_dir = tmp_path / "phase3" / "0014-B"
+    result = subprocess.run(
+        [
+            sys.executable,
+            "-m",
+            "last_generator.cli",
+            "warp",
+            str(sample_scan),
+            "-o",
+            str(output_dir),
+        ],
+        cwd=project_root,
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    assert result.returncode == 0, result.stderr
+    assert (output_dir / "last_warp.obj").exists()
+    assert (output_dir / "render.png").exists()
+    assert (output_dir / "warp_report.json").exists()
+
+
+def test_refine_command_writes_phase4_artifacts(tmp_path: Path) -> None:
+    project_root = Path(__file__).resolve().parents[1]
+    sample_scan = project_root.parent / "Sample Foot Scans" / "0014-B.obj"
+    output_dir = tmp_path / "phase4" / "0014-B"
+    result = subprocess.run(
+        [
+            sys.executable,
+            "-m",
+            "last_generator.cli",
+            "refine",
+            str(sample_scan),
+            "-o",
+            str(output_dir),
+        ],
+        cwd=project_root,
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    assert result.returncode == 0, result.stderr
+    assert (output_dir / "last_refined.obj").exists()
+    assert (output_dir / "render_pass1.png").exists()
+    assert (output_dir / "comparison.png").exists()
+    assert (output_dir / "refine_report.json").exists()
