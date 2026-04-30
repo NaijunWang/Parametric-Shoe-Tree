@@ -1,15 +1,10 @@
 from __future__ import annotations
 
 import logging
-from functools import lru_cache
-from importlib.util import module_from_spec, spec_from_file_location
-from pathlib import Path
 
 import numpy as np
 import trimesh
 import trimesh.transformations as tf
-
-from last_generator.io import repo_root
 
 LOGGER = logging.getLogger(__name__)
 
@@ -18,35 +13,90 @@ class AlignmentError(RuntimeError):
     """Raised when a scan cannot be aligned to the canonical frame."""
 
 
-def _partner_module_path() -> Path:
-    return (
-        repo_root()
-        / "Context"
-        / "Partner-Work"
-        / "Parametric-Shoe-Tree"
-        / "src"
-        / "extract_feature.py"
-    )
-
-
-@lru_cache(maxsize=1)
-def _partner_module():
-    module_path = _partner_module_path()
-    spec = spec_from_file_location("partner_extract_feature", module_path)
-    if spec is None or spec.loader is None:
-        raise ImportError(f"failed to load partner module from {module_path}")
-    module = module_from_spec(spec)
-    spec.loader.exec_module(module)
-    return module
-
-
 def get_area_from_path3d(path3d):
-    return _partner_module().get_area_from_path3d(path3d)
+    if path3d is None:
+        return 0
+    try:
+        path2d, _ = path3d.to_2D()
+        return path2d.area
+    except Exception:
+        return 0
 
 
 def align_mesh(mesh: trimesh.Trimesh) -> trimesh.Trimesh:
     aligned = mesh.copy()
-    return _partner_module().align_mesh(aligned)
+
+    # Normalize scale to millimeters based on bounding box size.
+    max_ext = max(aligned.extents)
+    scale = 1000.0 if max_ext < 1.0 else (10.0 if max_ext < 50.0 else 1.0)
+    aligned.apply_scale(scale)
+
+    to_origin, _ = trimesh.bounds.oriented_bounds(aligned)
+    aligned.apply_transform(to_origin)
+
+    # Longest side is expected to be the foot length axis.
+    extents = aligned.extents
+    long_axis = np.argmax(extents)
+    if long_axis == 0:
+        aligned.apply_transform(tf.rotation_matrix(np.radians(90), [0, 0, 1]))
+    elif long_axis == 2:
+        aligned.apply_transform(tf.rotation_matrix(np.radians(90), [1, 0, 0]))
+
+    def get_section_area_at_axis(axis_idx: int) -> float:
+        try:
+            origin = [0, 0, 0]
+            origin[axis_idx] = aligned.centroid[axis_idx]
+            normal = [0, 0, 0]
+            normal[axis_idx] = 1
+            section = aligned.section(plane_origin=origin, plane_normal=normal)
+            return get_area_from_path3d(section)
+        except Exception:
+            return 0
+
+    area_x = get_section_area_at_axis(0)
+    area_z = get_section_area_at_axis(2)
+    if area_x > area_z:
+        aligned.apply_transform(tf.rotation_matrix(np.radians(90), [0, 1, 0]))
+
+    bounds = aligned.bounds
+    z_min_section = aligned.section(
+        plane_origin=[0, 0, bounds[0][2] + 5],
+        plane_normal=[0, 0, 1],
+    )
+    z_max_section = aligned.section(
+        plane_origin=[0, 0, bounds[1][2] - 5],
+        plane_normal=[0, 0, 1],
+    )
+    area_bottom = get_area_from_path3d(z_min_section)
+    area_top = get_area_from_path3d(z_max_section)
+
+    if area_top > area_bottom:
+        aligned.apply_transform(tf.rotation_matrix(np.radians(180), [1, 0, 0]))
+
+    # Orient toes toward +Y by keeping the thinner end in front.
+    current_bounds = aligned.bounds
+    y_len = current_bounds[1][1] - current_bounds[0][1]
+    front_points = aligned.vertices[
+        aligned.vertices[:, 1] > (current_bounds[1][1] - y_len * 0.15)
+    ]
+    back_points = aligned.vertices[
+        aligned.vertices[:, 1] < (current_bounds[0][1] + y_len * 0.15)
+    ]
+    front_thickness = np.ptp(front_points[:, 2]) if len(front_points) > 0 else 0
+    back_thickness = np.ptp(back_points[:, 2]) if len(back_points) > 0 else 0
+
+    if front_thickness > back_thickness:
+        aligned.apply_transform(tf.rotation_matrix(np.radians(180), [0, 0, 1]))
+
+    vertices = aligned.vertices.copy()
+    min_v, max_v = vertices.min(axis=0), vertices.max(axis=0)
+    vertices[:, 0] -= (min_v[0] + max_v[0]) / 2
+    vertices[:, 1] -= min_v[1]
+    vertices[:, 2] -= min_v[2]
+    aligned.vertices = vertices
+    aligned._cache.clear()
+
+    return aligned
 
 
 def _rotation_to_match_vectors(source: np.ndarray, target: np.ndarray) -> np.ndarray:
@@ -110,7 +160,9 @@ def align_to_canonical(mesh: trimesh.Trimesh) -> trimesh.Trimesh:
     aligned = align_mesh(mesh)
 
     sole_normal = _fit_sole_normal(aligned)
-    support_rotation = _rotation_to_match_vectors(sole_normal, np.array([0.0, 0.0, 1.0]))
+    support_rotation = _rotation_to_match_vectors(
+        sole_normal, np.array([0.0, 0.0, 1.0])
+    )
     aligned.apply_transform(support_rotation)
 
     normalized = _normalize_origin(aligned)
