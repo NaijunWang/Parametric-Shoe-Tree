@@ -9,8 +9,8 @@ from typing import Any
 import numpy as np
 import trimesh
 
-from last_generator.align import align_to_canonical
-from last_generator.io import (
+from custom_shoe_tree.align import align_to_canonical
+from custom_shoe_tree.io import (
     MeshAudit,
     ensure_input_path,
     load_scan,
@@ -21,7 +21,7 @@ from last_generator.io import (
     scan_id_from_path,
     write_json,
 )
-from last_generator.viz import annotate_scan, render_annotated_png
+from custom_shoe_tree.viz import annotate_scan, render_annotated_png
 
 LOGGER = logging.getLogger(__name__)
 

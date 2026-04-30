@@ -61,7 +61,7 @@ def project_root() -> Path:
 
 
 def repo_root() -> Path:
-    return project_root().parent
+    return project_root()
 
 
 def ensure_directory(path: str | Path) -> Path:
@@ -345,7 +345,7 @@ def template_source_path() -> Path:
 
 def load_template_source(path: str | Path | None = None) -> trimesh.Trimesh:
     source_path = template_source_path() if path is None else ensure_input_path(path)
-    return load_reference_mesh(source_path, metadata_id="base_last")
+    return load_reference_mesh(source_path, metadata_id="base_shoe_tree")
 
 
 def mesh_audit_from_metadata(mesh: trimesh.Trimesh) -> MeshAudit:

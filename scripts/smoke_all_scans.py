@@ -5,12 +5,12 @@ import logging
 from pathlib import Path
 
 from PIL import Image, ImageDraw, ImageOps
-from last_generator.finalize import Phase5Artifacts, run_best as run_finalize_best
-from last_generator.io import write_csv
-from last_generator.measure import Phase1Artifacts, run as run_measure
-from last_generator.refine import Phase4Artifacts, run as run_refine
-from last_generator.template import TemplateArtifacts, run as run_template
-from last_generator.warp import Phase3Artifacts, run as run_warp
+from custom_shoe_tree.finalize import Phase5Artifacts, run_best as run_finalize_best
+from custom_shoe_tree.io import write_csv
+from custom_shoe_tree.measure import Phase1Artifacts, run as run_measure
+from custom_shoe_tree.refine import Phase4Artifacts, run as run_refine
+from custom_shoe_tree.template import TemplateArtifacts, run as run_template
+from custom_shoe_tree.warp import Phase3Artifacts, run as run_warp
 
 LOGGER = logging.getLogger("smoke_all_scans")
 
@@ -27,11 +27,11 @@ def project_root() -> Path:
 
 
 def repo_root() -> Path:
-    return project_root().parent
+    return project_root()
 
 
 def sample_scan_paths() -> list[Path]:
-    scans_dir = repo_root() / "Sample Foot Scans"
+    scans_dir = repo_root() / "sample-foot-scans"
     return sorted(scans_dir.glob("*.obj"))
 
 

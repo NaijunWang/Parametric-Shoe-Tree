@@ -9,8 +9,8 @@ from typing import Any
 import numpy as np
 import trimesh
 
-from last_generator.align import align_to_canonical, assert_alignment
-from last_generator.io import (
+from custom_shoe_tree.align import align_to_canonical, assert_alignment
+from custom_shoe_tree.io import (
     ensure_input_path,
     load_reference_mesh,
     load_scan,
@@ -18,10 +18,10 @@ from last_generator.io import (
     save_mesh,
     write_json,
 )
-from last_generator.measure import FootMeasurements, MeasurementContext, measure_mesh
-from last_generator.template import measure_template_mesh, run as run_template
-from last_generator.viz import render_overlay_review_png
-from last_generator.warp import SOLE_BLEND_MM, SOLE_THRESHOLD_MM, run as run_warp, trim_collar_fins
+from custom_shoe_tree.measure import FootMeasurements, MeasurementContext, measure_mesh
+from custom_shoe_tree.template import measure_template_mesh, run as run_template
+from custom_shoe_tree.viz import render_overlay_review_png
+from custom_shoe_tree.warp import SOLE_BLEND_MM, SOLE_THRESHOLD_MM, run as run_warp, trim_collar_fins
 
 LOGGER = logging.getLogger(__name__)
 
@@ -97,7 +97,7 @@ def _phase2_landmarks_path() -> Path:
 
 
 def _phase3_mesh_path(scan_path: Path) -> Path:
-    return _phase3_dir(scan_path) / "last_warp.obj"
+    return _phase3_dir(scan_path) / "shoe_tree_warp.obj"
 
 
 def _phase3_report_path(scan_path: Path) -> Path:
@@ -411,7 +411,7 @@ def _pass_footer_lines(
         (
             f"Landmark mode: {landmark_mode} | target distance threshold={distance_threshold_mm:.1f} mm"
         ),
-        "Grey = aligned foot scan, orange = Phase 4 refined last.",
+        "Grey = aligned foot scan, orange = Phase 4 refined shoe tree.",
     ]
 
 
@@ -460,7 +460,7 @@ def _render_pass_png(
         working_mesh,
         footer_lines=footer_lines,
         label_a="aligned foot scan",
-        label_b="phase 4 refined last",
+        label_b="phase 4 refined shoe tree",
         path=path,
     )
 
@@ -676,7 +676,7 @@ def run(
         ),
         path=destination / "comparison.png",
     )
-    mesh_path = save_mesh(refined_mesh, destination / "last_refined.obj")
+    mesh_path = save_mesh(refined_mesh, destination / "shoe_tree_refined.obj")
 
     report_payload = {
         "phase": "phase4",
@@ -700,7 +700,7 @@ def run(
         "final_within_tolerance": _all_tolerances_pass(final_drift),
         "pass_records": pass_records,
         "artifacts": {
-            "last_refined_obj": str(mesh_path),
+            "shoe_tree_refined_obj": str(mesh_path),
             "comparison_png": str(comparison_path),
             "pass_renders": [str(path) for path in pass_render_paths],
         },

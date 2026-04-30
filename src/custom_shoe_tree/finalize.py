@@ -8,8 +8,8 @@ from typing import Any
 
 import trimesh
 
-from last_generator.align import align_to_canonical, assert_alignment
-from last_generator.io import (
+from custom_shoe_tree.align import align_to_canonical, assert_alignment
+from custom_shoe_tree.io import (
     audit_mesh,
     ensure_directory,
     ensure_input_path,
@@ -21,10 +21,10 @@ from last_generator.io import (
     save_mesh,
     write_json,
 )
-from last_generator.measure import FootMeasurements
-from last_generator.refine import run as run_refine
-from last_generator.template import measure_template_mesh
-from last_generator.viz import render_overlay_review_png
+from custom_shoe_tree.measure import FootMeasurements
+from custom_shoe_tree.refine import run as run_refine
+from custom_shoe_tree.template import measure_template_mesh
+from custom_shoe_tree.viz import render_overlay_review_png
 
 LOGGER = logging.getLogger(__name__)
 
@@ -57,11 +57,11 @@ def _phase4_dir(scan_path: Path) -> Path:
 
 
 def _phase3_mesh_path(scan_path: Path) -> Path:
-    return _phase3_dir(scan_path) / "last_warp.obj"
+    return _phase3_dir(scan_path) / "shoe_tree_warp.obj"
 
 
 def _phase4_mesh_path(scan_path: Path) -> Path:
-    return _phase4_dir(scan_path) / "last_refined.obj"
+    return _phase4_dir(scan_path) / "shoe_tree_refined.obj"
 
 
 def _phase4_report_path(scan_path: Path) -> Path:
@@ -88,19 +88,19 @@ def _select_best_input(scan_path: Path) -> tuple[Path, str]:
 
 
 def _infer_scan_id(mesh_path: Path) -> str:
-    if mesh_path.stem in {"last_warp", "last_refined"} and mesh_path.parent.name:
+    if mesh_path.stem in {"shoe_tree_warp", "shoe_tree_refined"} and mesh_path.parent.name:
         return mesh_path.parent.name
-    if mesh_path.stem.startswith("last_"):
-        return mesh_path.stem.removeprefix("last_")
+    if mesh_path.stem.startswith("shoe_tree_"):
+        return mesh_path.stem.removeprefix("shoe_tree_")
     if mesh_path.parent.name and mesh_path.parent.name not in {"phase3", "phase4", "phase5"}:
         return mesh_path.parent.name
     return mesh_path.stem
 
 
 def _infer_source_label(mesh_path: Path) -> str:
-    if mesh_path.name == "last_warp.obj":
+    if mesh_path.name == "shoe_tree_warp.obj":
         return "phase3-fallback"
-    if mesh_path.name == "last_refined.obj":
+    if mesh_path.name == "shoe_tree_refined.obj":
         report_path = mesh_path.with_name("refine_report.json")
         if report_path.exists():
             payload = json.loads(report_path.read_text(encoding="utf-8"))
@@ -110,7 +110,7 @@ def _infer_source_label(mesh_path: Path) -> str:
 
 
 def _candidate_scan_path(scan_id: str) -> Path | None:
-    candidate = repo_root() / "Sample Foot Scans" / f"{scan_id}.obj"
+    candidate = repo_root() / "sample-foot-scans" / f"{scan_id}.obj"
     return candidate if candidate.exists() else None
 
 
@@ -190,14 +190,14 @@ def _render_review(
             "Max width / max height / volume: "
             f"{measurements.max_width_mm:.1f} / {measurements.max_height_mm:.1f} / {volume_ml:.1f} mL"
         ),
-        "Grey = aligned foot scan, orange = Phase 5 finalized last.",
+        "Grey = aligned foot scan, orange = Phase 5 finalized shoe tree.",
     ]
     return render_overlay_review_png(
         comparison_mesh,
         mesh,
         footer_lines=footer_lines,
-        label_a="aligned foot scan" if scan_path is not None else "phase 5 finalized last",
-        label_b="phase 5 finalized last",
+        label_a="aligned foot scan" if scan_path is not None else "phase 5 finalized shoe tree",
+        label_b="phase 5 finalized shoe tree",
         path=destination,
     )
 
@@ -249,8 +249,8 @@ def run(
             boundary_edge_count,
         )
 
-    obj_path = save_mesh(finalized_mesh, destination / f"last_{scan_id}.obj")
-    stl_path = save_binary_stl(finalized_mesh, destination / f"last_{scan_id}.stl")
+    obj_path = save_mesh(finalized_mesh, destination / f"shoe_tree_{scan_id}.obj")
+    stl_path = save_binary_stl(finalized_mesh, destination / f"shoe_tree_{scan_id}.stl")
     volume_ml = _round(finalized_mesh.volume / 1000.0)
     if volume_ml < 700.0 or volume_ml > 1200.0:
         LOGGER.warning(

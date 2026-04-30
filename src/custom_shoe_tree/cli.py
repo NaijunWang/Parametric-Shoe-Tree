@@ -4,8 +4,8 @@ import argparse
 import logging
 from pathlib import Path
 
-from last_generator import finalize, measure, refine, template, warp
-from last_generator.io import ensure_directory, ensure_input_path, scan_id_from_path
+from custom_shoe_tree import finalize, measure, refine, template, warp
+from custom_shoe_tree.io import ensure_directory, ensure_input_path, scan_id_from_path
 
 LOGGER = logging.getLogger(__name__)
 
@@ -19,8 +19,8 @@ def configure_logging(level: str) -> None:
 
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
-        prog="last-gen",
-        description="FABRIC-581 foot-scan to shoe-last pipeline",
+        prog="custom-shoe-tree",
+        description="FABRIC-581 foot-scan to custom shoe tree pipeline",
     )
     parser.add_argument(
         "--log-level",
@@ -40,7 +40,7 @@ def build_parser() -> argparse.ArgumentParser:
 
     template_parser = subparsers.add_parser(
         "template",
-        help="Phase 2: prepare and landmark the template last.",
+        help="Phase 2: prepare and landmark the template shoe tree.",
     )
     template_parser.add_argument("-o", "--output-dir", help="Directory for phase artifacts.")
     template_parser.set_defaults(handler=handle_template)
@@ -55,13 +55,13 @@ def build_parser() -> argparse.ArgumentParser:
         "--allowance-mm",
         type=float,
         default=3.0,
-        help="Upper-surface last allowance in millimeters.",
+        help="Upper-surface shoe-tree allowance in millimeters.",
     )
     warp_parser.set_defaults(handler=handle_warp)
 
     refine_parser = subparsers.add_parser(
         "refine",
-        help="Phase 4: refine the warped last with non-rigid registration.",
+        help="Phase 4: refine the warped shoe tree with non-rigid registration.",
     )
     refine_parser.add_argument("scan", help="Path to a single foot scan OBJ.")
     refine_parser.add_argument("-o", "--output-dir", help="Directory for phase artifacts.")
@@ -69,21 +69,21 @@ def build_parser() -> argparse.ArgumentParser:
         "--allowance-mm",
         type=float,
         default=3.0,
-        help="Upper-surface last allowance in millimeters.",
+        help="Upper-surface shoe-tree allowance in millimeters.",
     )
     refine_parser.set_defaults(handler=handle_refine)
 
     finalize_parser = subparsers.add_parser(
         "finalize",
-        help="Phase 5: repair and export the fabrication-ready last.",
+        help="Phase 5: repair and export the fabrication-ready shoe tree.",
     )
-    finalize_parser.add_argument("mesh", help="Path to the warped/refined last mesh OBJ.")
+    finalize_parser.add_argument("mesh", help="Path to the warped/refined shoe tree mesh OBJ.")
     finalize_parser.add_argument("-o", "--output-dir", help="Directory for phase artifacts.")
     finalize_parser.set_defaults(handler=handle_finalize)
 
     pipeline_parser = subparsers.add_parser(
         "pipeline",
-        help="Run the full shoe-last pipeline for one scan.",
+        help="Run the full custom shoe tree pipeline for one scan.",
     )
     pipeline_parser.add_argument("scan", help="Path to a single foot scan OBJ.")
     pipeline_parser.add_argument(
@@ -95,7 +95,7 @@ def build_parser() -> argparse.ArgumentParser:
         "--allowance-mm",
         type=float,
         default=3.0,
-        help="Upper-surface last allowance in millimeters.",
+        help="Upper-surface shoe-tree allowance in millimeters.",
     )
     pipeline_parser.set_defaults(handler=handle_pipeline)
 
