@@ -76,3 +76,11 @@ pyrightconfig.json
 # Data and output folders
 /data/
 /output/
+out/*
+!out/.gitkeep
+
+# Node / frontend
+node_modules/
+dist/
+.vite/
+*.tsbuildinfo
