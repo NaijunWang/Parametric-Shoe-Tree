@@ -1,7 +1,7 @@
 [project]
-name = "last-generator"
+name = "custom-shoe-tree"
 version = "0.1.0"
-description = "FABRIC-581 foot-scan to custom shoe-last pipeline"
+description = "FABRIC-581 foot-scan to custom shoe tree pipeline"
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
@@ -18,7 +18,7 @@ dependencies = [
 ]
 
 [project.scripts]
-last-gen = "last_generator.cli:main"
+custom-shoe-tree = "custom_shoe_tree.cli:main"
 
 [dependency-groups]
 dev = [
@@ -30,4 +30,4 @@ requires = ["hatchling>=1.27.0"]
 build-backend = "hatchling.build"
 
 [tool.hatch.build.targets.wheel]
-packages = ["src/last_generator"]
+packages = ["src/custom_shoe_tree"]

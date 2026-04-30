@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from last_generator.io import (
+from custom_shoe_tree.io import (
     load_scan,
     mesh_audit_from_metadata,
     resolve_output_dir,
@@ -11,7 +11,7 @@ from last_generator.io import (
 
 
 def test_scan_id_from_path_uses_stem() -> None:
-    assert scan_id_from_path("Sample Foot Scans/0030-A.obj") == "0030-A"
+    assert scan_id_from_path("sample-foot-scans/0030-A.obj") == "0030-A"
 
 
 def test_resolve_output_dir_defaults_to_phase_and_scan(tmp_path: Path) -> None:
@@ -24,7 +24,7 @@ def test_resolve_output_dir_defaults_to_phase_and_scan(tmp_path: Path) -> None:
 
 def test_load_scan_repairs_small_open_hole() -> None:
     project_root = Path(__file__).resolve().parents[1]
-    scan_path = project_root.parent / "Sample Foot Scans" / "0030-A.obj"
+    scan_path = project_root / "sample-foot-scans" / "0030-A.obj"
     mesh = load_scan(scan_path)
     audit = mesh_audit_from_metadata(mesh)
     assert audit.units == "m"

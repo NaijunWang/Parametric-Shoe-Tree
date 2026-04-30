@@ -9,11 +9,11 @@ import numpy as np
 from scipy.ndimage import gaussian_filter1d
 import trimesh
 
-from last_generator.align import assert_alignment, align_to_canonical
-from last_generator.io import ensure_input_path, load_scan, resolve_output_dir, save_mesh, write_json
-from last_generator.measure import FootMeasurements, MeasurementContext, SectionSlice, measure_mesh
-from last_generator.template import load_decimated_template, measure_template_mesh
-from last_generator.viz import render_warp_review_png
+from custom_shoe_tree.align import assert_alignment, align_to_canonical
+from custom_shoe_tree.io import ensure_input_path, load_scan, resolve_output_dir, save_mesh, write_json
+from custom_shoe_tree.measure import FootMeasurements, MeasurementContext, SectionSlice, measure_mesh
+from custom_shoe_tree.template import load_decimated_template, measure_template_mesh
+from custom_shoe_tree.viz import render_warp_review_png
 
 LOGGER = logging.getLogger(__name__)
 
@@ -604,7 +604,7 @@ def run(
     )
     report["source_scan_path"] = str(input_path)
 
-    mesh_path = save_mesh(warped_mesh, destination / "last_warp.obj")
+    mesh_path = save_mesh(warped_mesh, destination / "shoe_tree_warp.obj")
     render_path = render_warp_review_png(aligned_scan, warped_mesh, report, destination / "render.png")
     report_path = write_json(destination / "warp_report.json", report)
 

@@ -5,12 +5,12 @@ from pathlib import Path
 
 import trimesh
 
-from last_generator.refine import run
+from custom_shoe_tree.refine import run
 
 
 def test_refine_run_writes_report_and_selected_mesh(tmp_path: Path) -> None:
     project_root = Path(__file__).resolve().parents[1]
-    sample_scan = project_root.parent / "Sample Foot Scans" / "0014-B.obj"
+    sample_scan = project_root / "sample-foot-scans" / "0014-B.obj"
     output_dir = tmp_path / "phase4" / "0014-B"
 
     artifacts = run(sample_scan, output_dir, allowance_mm=3.0)

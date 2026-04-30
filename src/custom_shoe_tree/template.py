@@ -12,15 +12,15 @@ from PIL import Image, ImageDraw, ImageFont
 from shapely.geometry import MultiPoint
 import trimesh
 
-from last_generator.align import align_to_canonical, assert_alignment
-from last_generator.io import (
+from custom_shoe_tree.align import align_to_canonical, assert_alignment
+from custom_shoe_tree.io import (
     load_template_source,
     project_root,
     resolve_output_dir,
     save_mesh,
     write_json,
 )
-from last_generator.measure import FootMeasurements
+from custom_shoe_tree.measure import FootMeasurements
 
 LOGGER = logging.getLogger(__name__)
 
@@ -61,7 +61,7 @@ def _round(value: float) -> float:
 
 
 def source_landmarks_path() -> Path:
-    return project_root() / "src" / "last_generator" / "template_landmarks.json"
+    return project_root() / "src" / "custom_shoe_tree" / "template_landmarks.json"
 
 
 def _cache_dir(output_dir: str | Path | None) -> Path:
@@ -69,7 +69,7 @@ def _cache_dir(output_dir: str | Path | None) -> Path:
 
 
 def _cache_mesh_path(cache_dir: Path) -> Path:
-    return cache_dir / "base_last_decimated.obj"
+    return cache_dir / "base_shoe_tree_decimated.obj"
 
 
 def _largest_component(mesh: trimesh.Trimesh) -> tuple[trimesh.Trimesh, int]:
@@ -236,7 +236,7 @@ def load_decimated_template(cache_dir: Path, cache_path: Path | None = None) -> 
     decimated = trimesh.load(cache_path, process=False)
     if not isinstance(decimated, trimesh.Trimesh):
         decimated = trimesh.util.concatenate(list(decimated.geometry.values()))
-    decimated.metadata["scan_id"] = "base_last_decimated"
+    decimated.metadata["scan_id"] = "base_shoe_tree_decimated"
     decimated.metadata["source_path"] = str(cache_path)
     assert_alignment(decimated)
     return decimated
@@ -328,7 +328,7 @@ def measure_template_mesh(mesh: trimesh.Trimesh) -> FootMeasurements:
     toe_angle_deg = _toe_angle_deg(mesh)
 
     return FootMeasurements(
-        scan_id="base_last",
+        scan_id="base_shoe_tree",
         length_mm=_round(length_mm),
         max_width_mm=_round(max_width_mm),
         max_height_mm=_round(max_height_mm),
@@ -586,7 +586,7 @@ def run(output_dir: str | Path | None = None) -> TemplateArtifacts:
     template_source = align_to_canonical(load_template_source())
     source_measurements = measure_template_mesh(template_source)
     measurements_path = write_json(
-        destination / "base_last_measurements.json",
+        destination / "base_shoe_tree_measurements.json",
         _measurements_payload(source_measurements),
     )
 

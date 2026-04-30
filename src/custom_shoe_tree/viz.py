@@ -10,7 +10,7 @@ import trimesh.transformations as tf
 from PIL import Image, ImageDraw, ImageFont
 
 if TYPE_CHECKING:
-    from last_generator.measure import MeasurementContext
+    from custom_shoe_tree.measure import MeasurementContext
 
 SECTION_COLORS = {
     "heel": (240, 113, 103, 255),
@@ -502,13 +502,13 @@ def render_warp_review_png(
             f"{scale_summary['width_scale_min']:.2f}-{scale_summary['width_scale_max']:.2f} / "
             f"{scale_summary['height_scale_min']:.2f}-{scale_summary['height_scale_max']:.2f}"
         ),
-        "Grey = aligned foot scan, orange = Phase 3 warped last.",
+        "Grey = aligned foot scan, orange = Phase 3 warped shoe tree.",
     ]
     return render_overlay_review_png(
         scan_mesh,
         warped_mesh,
         footer_lines=footer_lines,
         label_a="aligned foot scan",
-        label_b="phase 3 warped last",
+        label_b="phase 3 warped shoe tree",
         path=path,
     )

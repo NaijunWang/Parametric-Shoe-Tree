@@ -3,7 +3,7 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
-from last_generator.template import run
+from custom_shoe_tree.template import run
 
 
 def test_template_run_writes_expected_outputs(tmp_path: Path) -> None:
@@ -22,7 +22,7 @@ def test_template_run_writes_expected_outputs(tmp_path: Path) -> None:
         "instep_top",
     }
     source_payload = json.loads(
-        (Path(__file__).resolve().parents[1] / "src" / "last_generator" / "template_landmarks.json").read_text(
+        (Path(__file__).resolve().parents[1] / "src" / "custom_shoe_tree" / "template_landmarks.json").read_text(
             encoding="utf-8"
         )
     )
