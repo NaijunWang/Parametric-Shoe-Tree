@@ -15,7 +15,7 @@ _PIPELINE_SRC = _REPO_ROOT / "src"
 if str(_PIPELINE_SRC) not in sys.path:
     sys.path.insert(0, str(_PIPELINE_SRC))
 
-from custom_shoe_tree import measure, finalize as finalize_mod
+from custom_shoe_tree import measure, finalize as finalize_mod, split as split_mod
 from custom_shoe_tree.io import load_reference_mesh, resolve_output_dir, save_mesh, write_json
 from custom_shoe_tree.measure import measure_mesh
 from custom_shoe_tree.template import load_decimated_template, measure_template_mesh, run as run_template
@@ -50,6 +50,9 @@ class JobStore:
             "scan_id": None,
             "stl_path": None,
             "obj_path": None,
+            "split_for_print": False,
+            "split_stl_paths": None,
+            "split_report_path": None,
             "error": None,
         }
 
@@ -114,6 +117,7 @@ async def run_generate_job(
     job_id: str,
     user_measurements: dict[str, Any],
     allowance_mm: float,
+    split_for_print: bool,
     store: JobStore,
 ) -> None:
     loop = asyncio.get_event_loop()
@@ -185,13 +189,36 @@ async def run_generate_job(
 
         artifacts = await loop.run_in_executor(None, _finalize)
 
+        split_stl_paths: dict[str, str] | None = None
+        split_report_path: str | None = None
+        if split_for_print:
+            store.update_job(job_id, progress=92, message="Splitting STL for print bed…")
+
+            def _split() -> Any:
+                phase6_dir = resolve_output_dir(None, phase_name="phase6_split", scan_path=scan_path)
+                return split_mod.run(artifacts.stl_path, phase6_dir)
+
+            split_artifacts = await loop.run_in_executor(None, _split)
+            split_stl_paths = {
+                "heel-tabs": str(split_artifacts.heel_tabs_stl_path),
+                "toe-sockets": str(split_artifacts.toe_sockets_stl_path),
+            }
+            split_report_path = str(split_artifacts.report_path)
+
         store.update_job(
             job_id,
             status="done",
             progress=100,
-            message="Your custom shoe tree is ready to download.",
+            message=(
+                "Your split custom shoe tree files are ready to download."
+                if split_for_print
+                else "Your custom shoe tree is ready to download."
+            ),
             stl_path=str(artifacts.stl_path),
             obj_path=str(artifacts.obj_path),
+            split_for_print=split_for_print,
+            split_stl_paths=split_stl_paths,
+            split_report_path=split_report_path,
         )
 
     except Exception as exc:

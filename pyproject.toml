@@ -11,6 +11,8 @@ dependencies = [
     "numpy>=2",
     "pillow>=12.2.0",
     "pyglet<2",
+    "pymeshfix>=0.18.1",
+    "pyvista>=0.47.3",
     "rtree>=1.4.1",
     "scipy>=1.16.2",
     "shapely>=2.1.2",
