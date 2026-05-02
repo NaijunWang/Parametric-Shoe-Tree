@@ -44,9 +44,12 @@ CLI entry point is `custom-shoe-tree`.
 | 3. Parametric warping | `warp.py` | Samples 60 template sections, applies 7 width and 8 height adaptive control points, smooths the deformation, and trims collar fins. | `out/phase3/<scan_id>/shoe_tree_warp.obj`, `warp_report.json`, `render.png` |
 | 4. Geometry refinement | `refine.py` | Runs non-rigid ICP with sole protection and toe sock-wrap cleanup, then selects the safest refined mesh. | `out/phase4/<scan_id>/shoe_tree_refined.obj`, `refine_report.json`, pass renders, `comparison.png` |
 | 5. Final export | `finalize.py` | Repairs topology, exports fabrication-ready OBJ/STL files, and reports print-volume stats. | `out/phase5/<scan_id>/shoe_tree_<scan_id>.obj`, `shoe_tree_<scan_id>.stl`, `pipeline_report.json`, `review.png` |
+| 6. Print splitting (optional) | `split.py` | Cleans the STL, splits it along the Y-axis, and adds snap-fit tabs/sockets for print-bed fabrication. | `out/phase6_split/<scan_id>/shoe_tree_<scan_id>_heel_tabs.stl`, `shoe_tree_<scan_id>_toe_sockets.stl`, `split_report.json` |
 
 The template input file is intentionally still named `cc_base_last.obj` because that is the
 third-party source asset name. It is ignored by Git and expected at `template/cc_base_last.obj`.
+The optional print-splitting phase integrates the partner cleanup prototype from `mesh_tools.py`
+into the package; the simpler `split_mesh.py` prototype is superseded by this packaged flow.
 
 ## Measured Parameters
 
@@ -86,6 +89,7 @@ presentation PDF for the result photos and fabrication context.
 |   |-- warp.py
 |   |-- refine.py
 |   |-- finalize.py
+|   |-- split.py
 |   |-- viz.py
 |   `-- io.py
 |-- tests/
@@ -112,6 +116,8 @@ scans can be placed under `sample-foot-scans/`.
 uv sync
 uv run custom-shoe-tree --help
 uv run custom-shoe-tree pipeline "sample-foot-scans/0014-B.obj"
+uv run custom-shoe-tree pipeline --split-for-print "sample-foot-scans/0014-B.obj"
+uv run custom-shoe-tree split "out/phase5/0014-B/shoe_tree_0014-B.stl"
 uv run python scripts/smoke_all_scans.py
 uv run pytest
 ```
@@ -142,15 +148,16 @@ npm run dev
 ```
 
 Open `http://localhost:5173`, upload a `.obj` foot scan, review the measurements, adjust
-the shoe-tree allowance if needed, generate the model, and download the STL.
+the shoe-tree allowance if needed, choose whether to split the STL for print-bed fabrication,
+generate the model, and download either the single STL or the split heel/toe STLs.
 
 ## Tech Stack
 
 - Python 3.12
 - `trimesh`, `scipy`, `numpy`, `shapely`, `networkx`, `manifold3d`, `fast-simplification`
+- `pymeshfix` and `pyvista` for Phase 6 split-prep cleanup
 - FastAPI backend
 - Vite + React frontend
-- Fabrication experiments described in the deck also reference `pymeshfix` for mesh repair
 
 ## Datasets And Related Work
 

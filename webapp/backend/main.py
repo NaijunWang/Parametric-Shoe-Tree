@@ -61,6 +61,7 @@ async def get_status(job_id: str) -> dict[str, Any]:
 class GenerateRequest(BaseModel):
     measurements: dict[str, Any]
     allowance_mm: float = 3.0
+    split_for_print: bool = False
 
 
 @app.post("/api/generate/{job_id}")
@@ -72,7 +73,7 @@ async def generate(job_id: str, body: GenerateRequest) -> dict[str, Any]:
         raise HTTPException(status_code=400, detail=f"Cannot generate from status '{job['status']}'.")
 
     store.update_job(job_id, status="generating", progress=0, message="Queued…")
-    asyncio.create_task(run_generate_job(job_id, body.measurements, body.allowance_mm, store))
+    asyncio.create_task(run_generate_job(job_id, body.measurements, body.allowance_mm, body.split_for_print, store))
     return {"job_id": job_id, "status": "generating"}
 
 
@@ -108,4 +109,29 @@ async def download_obj(job_id: str) -> FileResponse:
         media_type="text/plain",
         filename=obj_path.name,
         headers={"Access-Control-Allow-Origin": "*"},
+    )
+
+
+@app.get("/api/download/{job_id}/split/{part}")
+async def download_split_stl(job_id: str, part: str) -> FileResponse:
+    job = store.get_job(job_id)
+    if not job:
+        raise HTTPException(status_code=404, detail="Job not found.")
+    if job["status"] != "done":
+        raise HTTPException(status_code=400, detail="Split STL files are not ready yet.")
+
+    split_paths = job.get("split_stl_paths") or {}
+    if part not in {"heel-tabs", "toe-sockets"}:
+        raise HTTPException(status_code=404, detail="Unknown split STL part.")
+    split_path_value = split_paths.get(part)
+    if not split_path_value:
+        raise HTTPException(status_code=404, detail="Split STL file was not generated for this job.")
+
+    split_path = Path(split_path_value)
+    if not split_path.exists():
+        raise HTTPException(status_code=404, detail="Split STL file missing on disk.")
+    return FileResponse(
+        str(split_path),
+        media_type="application/octet-stream",
+        filename=split_path.name,
     )

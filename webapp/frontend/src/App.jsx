@@ -102,6 +102,7 @@ export default function App() {
   const [jobData, setJobData] = useState(null)  // full status from /api/status
   const [measurements, setMeasurements] = useState({})
   const [allowanceMm, setAllowanceMm] = useState(3.0)
+  const [splitForPrint, setSplitForPrint] = useState(false)
   const [dragOver, setDragOver] = useState(false)
   const [uploading, setUploading] = useState(false)
   const fileInputRef = useRef(null)
@@ -168,7 +169,7 @@ export default function App() {
     const res = await fetch(`${API}/api/generate/${jobId}`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ measurements, allowance_mm: allowanceMm }),
+      body: JSON.stringify({ measurements, allowance_mm: allowanceMm, split_for_print: splitForPrint }),
     })
     if (!res.ok) { alert('Generate request failed'); return }
     startPolling(jobId)
@@ -178,6 +179,7 @@ export default function App() {
   const generating = jobData?.status === 'generating'
   const hasError = jobData?.status === 'error'
   const stlUrl = step === 4 && jobId ? `${API}/api/download/${jobId}/stl` : null
+  const hasSplitOutputs = Boolean(jobData?.split_stl_paths)
 
   return (
     <div className="app">
@@ -305,6 +307,21 @@ export default function App() {
                 <span className="allowance-val">{allowanceMm} mm</span>
               </div>
 
+              <label className="toggle-row">
+                <span className="toggle-copy">
+                  <span className="toggle-title">Split for print bed</span>
+                  <span className="toggle-subtitle">Export heel and toe halves with snap-fit clips</span>
+                </span>
+                <input
+                  type="checkbox"
+                  checked={splitForPrint}
+                  onChange={(e) => setSplitForPrint(e.target.checked)}
+                />
+                <span className="toggle-track" aria-hidden="true">
+                  <span className="toggle-thumb" />
+                </span>
+              </label>
+
               <div className="btn-row">
                 <button className="btn btn-secondary" onClick={() => { stopPolling(); setStep(1); setJobData(null) }}>
                   ← New Scan
@@ -351,25 +368,62 @@ export default function App() {
         {step === 4 && (
           <div className="card">
             <div className="card-header">
-              <h2>Your Shoe Tree is Ready</h2>
-              <p>Download the STL and import it directly into BambuLab Studio.</p>
+              <h2>{hasSplitOutputs ? 'Your Split Shoe Tree Files Are Ready' : 'Your Shoe Tree is Ready'}</h2>
+              <p>
+                {hasSplitOutputs
+                  ? 'Download both split STLs for print-bed fabrication.'
+                  : 'Download the STL and import it directly into BambuLab Studio.'}
+              </p>
             </div>
             <div className="card-body">
               <div className="success-banner">
                 <span className="success-icon">✅</span>
-                <span>Pipeline complete — fabrication-ready STL exported.</span>
+                <span>
+                  {hasSplitOutputs
+                    ? 'Pipeline complete — split print-ready STLs exported.'
+                    : 'Pipeline complete — fabrication-ready STL exported.'}
+                </span>
               </div>
 
               <div className="result-layout">
                 <div className="result-actions">
-                  <a
-                    href={`${API}/api/download/${jobId}/stl`}
-                    download
-                    className="btn btn-success"
-                    style={{ textDecoration: 'none' }}
-                  >
-                    ⬇ Download STL
-                  </a>
+                  {hasSplitOutputs ? (
+                    <>
+                      <a
+                        href={`${API}/api/download/${jobId}/split/heel-tabs`}
+                        download
+                        className="btn btn-success"
+                        style={{ textDecoration: 'none' }}
+                      >
+                        ⬇ Download Heel Half
+                      </a>
+                      <a
+                        href={`${API}/api/download/${jobId}/split/toe-sockets`}
+                        download
+                        className="btn btn-success"
+                        style={{ textDecoration: 'none' }}
+                      >
+                        ⬇ Download Toe Half
+                      </a>
+                      <a
+                        href={`${API}/api/download/${jobId}/stl`}
+                        download
+                        className="btn btn-secondary"
+                        style={{ textDecoration: 'none' }}
+                      >
+                        ⬇ Download Unsplit STL
+                      </a>
+                    </>
+                  ) : (
+                    <a
+                      href={`${API}/api/download/${jobId}/stl`}
+                      download
+                      className="btn btn-success"
+                      style={{ textDecoration: 'none' }}
+                    >
+                      ⬇ Download STL
+                    </a>
+                  )}
                   <a
                     href={`${API}/api/download/${jobId}/obj`}
                     download
@@ -391,6 +445,7 @@ export default function App() {
                   {[
                     ['Scan ID', jobData?.scan_id],
                     ['Allowance', `${allowanceMm} mm`],
+                    ['Split for Print', hasSplitOutputs ? 'Yes' : 'No'],
                     ['EU Size', jobData?.shoe_size?.eu],
                     ['US Men\'s', jobData?.shoe_size?.us_mens],
                   ].map(([k, v]) => (

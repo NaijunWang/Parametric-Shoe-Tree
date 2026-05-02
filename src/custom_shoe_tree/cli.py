@@ -4,7 +4,7 @@ import argparse
 import logging
 from pathlib import Path
 
-from custom_shoe_tree import finalize, measure, refine, template, warp
+from custom_shoe_tree import finalize, measure, refine, split, template, warp
 from custom_shoe_tree.io import ensure_directory, ensure_input_path, scan_id_from_path
 
 LOGGER = logging.getLogger(__name__)
@@ -81,6 +81,25 @@ def build_parser() -> argparse.ArgumentParser:
     finalize_parser.add_argument("-o", "--output-dir", help="Directory for phase artifacts.")
     finalize_parser.set_defaults(handler=handle_finalize)
 
+    split_parser = subparsers.add_parser(
+        "split",
+        help="Phase 6: split the finalized shoe tree for print-bed fabrication.",
+    )
+    split_parser.add_argument("mesh", help="Path to a finalized shoe tree mesh OBJ/STL.")
+    split_parser.add_argument("-o", "--output-dir", help="Directory for split STL artifacts.")
+    split_parser.add_argument(
+        "--split-fraction",
+        type=float,
+        default=0.5,
+        help="Y-axis split fraction between heel and toe halves.",
+    )
+    split_parser.add_argument(
+        "--no-clips",
+        action="store_true",
+        help="Export split halves without snap-fit tabs and sockets.",
+    )
+    split_parser.set_defaults(handler=handle_split)
+
     pipeline_parser = subparsers.add_parser(
         "pipeline",
         help="Run the full custom shoe tree pipeline for one scan.",
@@ -96,6 +115,17 @@ def build_parser() -> argparse.ArgumentParser:
         type=float,
         default=3.0,
         help="Upper-surface shoe-tree allowance in millimeters.",
+    )
+    pipeline_parser.add_argument(
+        "--split-for-print",
+        action="store_true",
+        help="Run Phase 6 after final export and write split print-bed STLs.",
+    )
+    pipeline_parser.add_argument(
+        "--split-fraction",
+        type=float,
+        default=0.5,
+        help="Y-axis split fraction used when --split-for-print is enabled.",
     )
     pipeline_parser.set_defaults(handler=handle_pipeline)
 
@@ -124,6 +154,16 @@ def handle_refine(args: argparse.Namespace) -> int:
 
 def handle_finalize(args: argparse.Namespace) -> int:
     finalize.run(args.mesh, args.output_dir)
+    return 0
+
+
+def handle_split(args: argparse.Namespace) -> int:
+    split.run(
+        args.mesh,
+        args.output_dir,
+        split_fraction=args.split_fraction,
+        add_clips=not args.no_clips,
+    )
     return 0
 
 
@@ -158,6 +198,13 @@ def handle_pipeline(args: argparse.Namespace) -> int:
     )
     LOGGER.info("pipeline completed for %s", scan_id)
     LOGGER.info("final pipeline report: %s", artifacts.report_path)
+    if args.split_for_print:
+        split_artifacts = split.run(
+            artifacts.stl_path,
+            _pipeline_phase_output(pipeline_root, "phase6_split", scan_id),
+            split_fraction=args.split_fraction,
+        )
+        LOGGER.info("split STL report: %s", split_artifacts.report_path)
     return 0
 
 

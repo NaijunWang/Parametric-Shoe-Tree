@@ -4,6 +4,8 @@ import subprocess
 import sys
 from pathlib import Path
 
+import trimesh
+
 
 def test_help_lists_phase_commands() -> None:
     project_root = Path(__file__).resolve().parents[1]
@@ -20,6 +22,7 @@ def test_help_lists_phase_commands() -> None:
     assert "warp" in result.stdout
     assert "refine" in result.stdout
     assert "finalize" in result.stdout
+    assert "split" in result.stdout
     assert "pipeline" in result.stdout
 
 
@@ -123,3 +126,29 @@ def test_refine_command_writes_phase4_artifacts(tmp_path: Path) -> None:
     assert (output_dir / "render_pass1.png").exists()
     assert (output_dir / "comparison.png").exists()
     assert (output_dir / "refine_report.json").exists()
+
+
+def test_split_command_writes_phase6_artifacts(tmp_path: Path) -> None:
+    project_root = Path(__file__).resolve().parents[1]
+    mesh_path = tmp_path / "shoe_tree_box.stl"
+    trimesh.creation.box(extents=(50.0, 120.0, 30.0)).export(mesh_path)
+    output_dir = tmp_path / "phase6_split" / "box"
+    result = subprocess.run(
+        [
+            sys.executable,
+            "-m",
+            "custom_shoe_tree.cli",
+            "split",
+            str(mesh_path),
+            "-o",
+            str(output_dir),
+        ],
+        cwd=project_root,
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    assert result.returncode == 0, result.stderr
+    assert (output_dir / "shoe_tree_box_heel_tabs.stl").exists()
+    assert (output_dir / "shoe_tree_box_toe_sockets.stl").exists()
+    assert (output_dir / "split_report.json").exists()

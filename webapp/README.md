@@ -1,8 +1,8 @@
 # Custom Shoe Tree Generator - Web UI
 
 A browser-based frontend that drives the FABRIC-581 custom shoe tree pipeline end to end.
-Upload a foot scan, review the extracted measurements, generate a printable STL, and preview
-the result in the browser.
+Upload a foot scan, review the extracted measurements, choose whether to split the print,
+generate printable STL files, and preview the intact result in the browser.
 
 ## Prerequisites
 
@@ -63,7 +63,8 @@ Open `http://localhost:5173` in your browser.
 
 2. **Review** - Inspect and optionally adjust the extracted measurements.
    The UI also shows an estimated EU / US / UK shoe size. Drag the *Shoe Tree Allowance*
-   slider to add more or less upper-surface offset.
+   slider to add more or less upper-surface offset. Enable *Split for print bed* when you
+   want separate heel/toe STLs with snap-fit clips.
 
 3. **Generate** - Click **Generate Shoe Tree**.
    The pipeline runs all phases in the background:
@@ -72,8 +73,9 @@ Open `http://localhost:5173` in your browser.
    - Phase 4: NRICP refinement
    - Phase 5: topology repair and STL export
 
-4. **Download** - Download `shoe_tree_<scan_id>.stl` and import it into BambuLab Studio.
-   A 3D preview renders directly in the browser (drag to rotate, scroll to zoom).
+4. **Download** - Download `shoe_tree_<scan_id>.stl`, or the split
+   `shoe_tree_<scan_id>_heel_tabs.stl` and `shoe_tree_<scan_id>_toe_sockets.stl` files.
+   A 3D preview of the intact STL renders directly in the browser.
 
 ## Output Files
 
@@ -86,7 +88,8 @@ out/
 |-- phase2/             cached template artifacts
 |-- phase3/<scan_id>/   shoe_tree_warp.obj
 |-- phase4/<scan_id>/   shoe_tree_refined.obj
-`-- phase5/<scan_id>/   shoe_tree_<scan_id>.obj and .stl
+|-- phase5/<scan_id>/   shoe_tree_<scan_id>.obj and .stl
+`-- phase6_split/<scan_id>/   split heel/toe STLs when requested
 ```
 
 ## Troubleshooting
