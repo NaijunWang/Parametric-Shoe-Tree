@@ -170,9 +170,4 @@ the smoke script.
 
 ## Authors And Acknowledgments
 
-Built by Alex, James, and Naijun as a FABRIC-581 partner project.
-
-## Status
-
-Project submission for FABRIC-581. No standalone license file is included in this nested
-repository.
+Built by Alex, James, and Naijun as a Computational Fabrication (CASCS581) partner project.
